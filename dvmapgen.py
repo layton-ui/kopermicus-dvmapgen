@@ -15,15 +15,17 @@ preset_choice = len(presets)  # default to custom
 
 while True:
     try:
-        preset_choice = input(f"Choose a preset (1-{len(presets)}), press enter for custom): ")
-        if not preset_choice or preset_choice == 0:
+        preset_choice_input = input(f"Choose a preset (1-{len(presets)}), press enter for custom): ")
+        if not preset_choice_input:
             preset_choice = len(presets)
             break
-        preset_choice = int(preset_choice)
+        preset_choice = int(preset_choice_input)
+        if preset_choice < 1 or preset_choice > len(presets):
+            print(f"Invalid input, please enter a number from 1 to {len(presets)}.")
+            continue
         break
     except ValueError:
         print(f"Invalid input, please enter a number from 1 to {len(presets)}.")
-    
 if preset_choice < 1 or preset_choice > len(presets):
     print("Invalid choice, defaulting to custom.")
     preset_choice = len(presets)
@@ -41,7 +43,7 @@ if custom is chosen:
 class Installation:
     def __init__(self, name, path, origin):
         self.name = name
-        self.path = path
+        self.path = os.path.abspath(path)
         self.origin = origin # e.g. "steamscanner", "user"
 
 installation_directories = []
@@ -76,13 +78,15 @@ if preset_choice == len(presets):
             else:
                 print("Path is invalid, defaulting to KSP preset.")
                 preset_choice = 1
-                installation_directories = []
             
             ksp_path_name_input = input("Name for this KSP installation: ")
-            if not ksp_path_name_input:
+            
+            # if no name is entered, or default was chosen because of invalid path, ...
+            if not ksp_path_name_input or preset_choice == 1:
                 # count existing installations named "Custom KSP Installation" and append number to name
                 existing_custom_installations = [inst for inst in installation_directories if inst.name.startswith("Custom KSP Installation")]
                 ksp_path_name_input = f"Custom KSP Installation {len(existing_custom_installations) + 1}"
+                print(f"No name entered, defaulting to '{ksp_path_name_input}'.")
             
             installation_directories.append(Installation(ksp_path_name_input, ksp_path_input, "steamscanner"))
             
@@ -102,7 +106,7 @@ if preset_choice == len(presets):
     
 
 
-# === see if we can find a config file with the same name as the installation or preset, if so, load it and skip to map generation ===
+# === search for a config file with the same name as the installation or preset, if so, load it and skip to map generation ===
 
 import os
 import json
